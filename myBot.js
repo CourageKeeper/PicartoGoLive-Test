@@ -10,8 +10,10 @@ const botChannelName = config.botChannelName;
 const fs = require("fs");
 const XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 const APILink = config.APILink;
+const refreshRate = config.refreshRate;
 var request = new XMLHttpRequest();
 //End of HTML stuff
+
 client.on('ready', () => {
   console.log('Loading...');
 
@@ -19,15 +21,28 @@ client.on('ready', () => {
   request.open('GET', APILink, false);
   request.send(null);
   if(request.status == 200){
-    fs.writeFile("API.json", request.responseText,(error) => {
+
+    var reply = JSON.parse(request.responseText);
+    console.log("Get status: " + reply.is_online);
+    /*
+    fs.writeFile("API.json", reply, (error) => {
+
       if (error) console.log("Error writing to file.");
       else console.log("API file written.");
     });
     //console.log(request.responseText);
+    */
   }
   //End HTML stuff
   console.log('Ready!');
 });
+
+//Timer for checking the online states
+/*
+setInterval(() => {
+
+}, refreshRate);
+*/
 
 //Handles the joining of new members
 client.on("guildMemberAdd", member => {
