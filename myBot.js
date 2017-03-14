@@ -5,8 +5,28 @@ const config = require("./config.json");
 
 const botChannelName = config.botChannelName;
 
+
+//new HTML request info
+const fs = require("fs");
+const XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+const APILink = config.APILink;
+var request = new XMLHttpRequest();
+//End of HTML stuff
 client.on('ready', () => {
-  console.log('I am ready!');
+  console.log('Loading...');
+
+  //new HTML request info
+  request.open('GET', APILink, false);
+  request.send(null);
+  if(request.status == 200){
+    fs.writeFile("API.json", request.responseText,(error) => {
+      if (error) console.log("Error writing to file.");
+      else console.log("API file written.");
+    });
+    //console.log(request.responseText);
+  }
+  //End HTML stuff
+  console.log('Ready!');
 });
 
 //Handles the joining of new members

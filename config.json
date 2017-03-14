@@ -1,5 +1,6 @@
 {
   "prefix" : "%",
   "token" : "Mjg2MzE5NzkzNDQ1Nzk3ODg4.C5e_pA.rSQS7-wD8Rw8kGYynh9TdfFx3uk",
-  "botChannelName" : "test"
+  "botChannelName" : "test",
+  "APILink" : "https://api.picarto.tv/channel/338bf7aa-fe1e-11e6-84c7-005056984bd4"
 }
