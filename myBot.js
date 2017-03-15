@@ -1,48 +1,46 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
-const config = require("./config.json");
-
-const botChannelName = config.botChannelName;
-
-
-//new HTML request info
-const fs = require("fs");
 const XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-const APILink = config.APILink;
-const refreshRate = config.refreshRate;
 var request = new XMLHttpRequest();
-//End of HTML stuff
+
+const config = require("./config.json");
+const refreshRate = config.refreshRate;
+
+//temp
+const servConfig = require("./serverConfig/NERV_HQ.json");
+//TODO redo these from config into server config
+const botChannelName = servConfig.botChannelName;
+const botChannelID = servConfig.botChannelID;
+const APILink = servConfig.APILink;
+
+//Servers
+var serversArray = null;
+
 
 client.on('ready', () => {
   console.log('Loading...');
+  serversArray = client.guilds.keyArray();
 
-  //new HTML request info
-  request.open('GET', APILink, false);
-  request.send(null);
-  if(request.status == 200){
-
-    var reply = JSON.parse(request.responseText);
-    console.log("Get status: " + reply.is_online);
-    /*
-    fs.writeFile("API.json", reply, (error) => {
-
-      if (error) console.log("Error writing to file.");
-      else console.log("API file written.");
-    });
-    //console.log(request.responseText);
-    */
-  }
-  //End HTML stuff
   console.log('Ready!');
 });
 
 //Timer for checking the online states
-/*
 setInterval(() => {
+  let guild = client.guilds.get(serversArray[0]);
 
+  //end of bullshit
+  request.open('GET', APILink, false);
+  request.send(null);
+  if(request.status == 200){
+    var reply = JSON.parse(request.responseText);
+    //console.log("Online status: " + reply.is_online);
+    if(reply.is_online) guild.channels.get(botChannelID).sendMessage("@here " + reply.channel + " is online!");
+    else guild.channels.get(botChannelID).sendMessage("@here " + reply.channel + " is offline.");
+
+  }
 }, refreshRate);
-*/
+
 
 //Handles the joining of new members
 client.on("guildMemberAdd", member => {
