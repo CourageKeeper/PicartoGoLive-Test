@@ -16,11 +16,17 @@ const APILink = servConfig.APILink;
 
 //Servers
 var serversArray = null;
+var serverStateArray[][] = null;
 
 
 client.on('ready', () => {
   console.log('Loading...');
   serversArray = client.guilds.keyArray();
+
+  //setup a STATE var per server
+  for(int i = 0, i < serversArray.length, i++){
+    serverStateArray[i] = false;
+  }
 
   console.log('Ready!');
 });
@@ -35,7 +41,10 @@ setInterval(() => {
   if(request.status == 200){
     var reply = JSON.parse(request.responseText);
     //console.log("Online status: " + reply.is_online);
-    if(reply.is_online) guild.channels.get(botChannelID).sendMessage("@here " + reply.channel + " is online!");
+    if(reply.is_online) {
+      if()
+      guild.channels.get(botChannelID).sendMessage("@here " + reply.channel + " is online!");
+    }
     else guild.channels.get(botChannelID).sendMessage("@here " + reply.channel + " is offline.");
 
   }
