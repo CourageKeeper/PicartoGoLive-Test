@@ -36,9 +36,7 @@ client.on('ready', () => {
 
   //setup a STATE var per server TODO needs to be per streamer on server...
   for(i = 0; i < listOfServers.servers.length; i++) {
-    for(n = 0; n < listOfServers.servers[i].config.streamers.length; n++){
-      serverStateCollection.set(serversArray[i], new Collection([listOfServers.servers[i].config.streamers[n].name, false])); //Collection(ID, {streamer.name, STATE}) //What I HOPE is happening
-    }
+    serverStateCollection.set(serversArray[i], false);
   }
 
   console.log("Number of servers in directory: " + listOfServers.servers.length); //Servers the bot has configurations for
