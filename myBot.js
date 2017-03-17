@@ -1,53 +1,83 @@
-const Discord = require('discord.js');
-const client = new Discord.Client();
-
+/**
+* A Bot that will notify a Discord server when a streamer goes live on Picarto.
+*/
+//Require frameworks needed for code to function
+const Discord = require("discord.js");
+const Collection = require("discord.js/src/util/Collection.js");
 const XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+const fs = require("fs");
+
+//Primary constructors
+const client = new Discord.Client();
 var request = new XMLHttpRequest();
 
 const config = require("./config.json");
 const refreshRate = config.refreshRate;
+client.login(config.token);
+
+const listOfServers = require("./servers.json");
 
 //temp
-const servConfig = require("./serverConfig/NERV_HQ.json");
+var servConfig = require("./serverConfig/NERV_HQ.json");
 //TODO redo these from config into server config
 const botChannelName = servConfig.botChannelName;
 const botChannelID = servConfig.botChannelID;
 const APILink = servConfig.APILink;
+const streamLink = servConfig.streamLink;
 
-//Servers
+//Global Variables
 var serversArray = null;
-var serverStateArray[][] = null;
+var serverStateCollection = new Collection();//This holds the online/offline states for servers. TODO Needs to handle multiple streamers...
 
 
 client.on('ready', () => {
   console.log('Loading...');
-  serversArray = client.guilds.keyArray();
+  serversArray = client.guilds.keyArray();// ACTUAL Discord servers that the bot is a member of
 
-  //setup a STATE var per server
-  for(int i = 0, i < serversArray.length, i++){
-    serverStateArray[i] = false;
+  //setup a STATE var per server TODO needs to be per streamer on server...
+  for(i = 0; i < listOfServers.servers.length; i++) {
+    serverStateCollection.set(serversArray[i], false);
   }
+
+  console.log("Number of servers in directory: " + listOfServers.servers.length); //Servers the bot has configurations for
 
   console.log('Ready!');
 });
 
 //Timer for checking the online states
 setInterval(() => {
-  let guild = client.guilds.get(serversArray[0]);
+  for(i = 0; i < listOfServers.servers.length; i++){//Iterate through all servers in servers.json Directory
 
-  //end of bullshit
-  request.open('GET', APILink, false);
-  request.send(null);
-  if(request.status == 200){
-    var reply = JSON.parse(request.responseText);
-    //console.log("Online status: " + reply.is_online);
-    if(reply.is_online) {
-      if()
-      guild.channels.get(botChannelID).sendMessage("@here " + reply.channel + " is online!");
+    let guild = client.guilds.get(listOfServers.servers[i].id);
+    if(guild === undefined) {//Undefine occurs if there is an ID that doesn't match a server the client has access to.
+      console.log("Bad server id, or trying to access server the bot does not have access to. Server number: " + i + " named: " + listOfServers.servers[i].name);
+      continue;
     }
-    else guild.channels.get(botChannelID).sendMessage("@here " + reply.channel + " is offline.");
+    try {//This will fail if the configuration file is missing
+      var servConfig = require(listOfServers.servers[i].config);
+    } catch (err) {
+      console.log("Bad or missing configuration file at position: " + i + " named: " + listOfServers.servers[i].name);
+      continue;
+    }
+    //TODO try/catch  reading the rest of the server config file
 
-  }
+    request.open('GET', APILink, false); //TODO APILink needs to be specific to the server config!
+    request.send(null);
+    if(request.status == 200){
+      var reply = JSON.parse(request.responseText);
+
+      if(reply.is_online !== serverStateCollection.get(listOfServers.servers[i].id)) { //if there has been a change
+        if(reply.is_online){ //if going to online, post about it and set state to online
+          serverStateCollection.set(listOfServers.servers[i].id, true);
+          guild.channels.get(botChannelID).sendMessage("@here " + reply.channel + " is now streaming! Check it out here: " + streamLink);
+        }
+        else {//if going offline, say goodbye!
+          serverStateCollection.set(listOfServers.servers[i].id, false);
+          guild.channels.get(botChannelID).sendMessage(reply.channel + " has gone offline, thanks for watching!");
+        }
+      }
+    }//endof if(request.status == 200)
+  }//endof for loop to iterate through servers
 }, refreshRate);
 
 
@@ -65,9 +95,6 @@ client.on("guildMemberAdd", member => {
     }
   }
   guild.channels.get(botChannelID).sendMessage(`Welcome ${member.user} to ${guild.name}!`);
-
-  //console.log(botchannel);
-  //guild.defaultChannel.sendMessage(`Welcome ${member.user} to ${guild.name}!`);
 });
 
 //Message contains the actions the bot can take in response to a user's message
@@ -107,5 +134,3 @@ client.on('message', message => {
   }
 
 });
-
-client.login(config.token);
