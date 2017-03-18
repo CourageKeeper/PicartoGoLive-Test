@@ -30,8 +30,26 @@ var serversArray = null;
 var serverStateCollection = new Collection();//This holds the online/offline states for servers.
 
 function getServerConfiguration(configLocation, serverNumber) {
+  try {
+    var serverConfig = require(configLocation);
 
-}
+    if(serverConfig === undefined) {
+      //console.log("Server number: " + listOfServers.servers[i] + " in dictionary has an undefined config.json.");
+      return null;
+    }
+
+    if(serverConfig.streamers === undefined) {
+      //console.log("Server config: " + listOfServers.servers[i].config + " is missing streamers construct");
+      return null;
+    }
+
+    return serverConfig;
+  }
+  catch (err) {
+    //console.log("An error has occured with server: " + serverNumber + " configuration.");
+    return null;
+  }
+}//End of getServerConfiguration function
 
 client.on('ready', () => {
   console.log('Loading...');
@@ -39,6 +57,10 @@ client.on('ready', () => {
 
   for(i = 0; i < listOfServers.servers.length; i++) { //TODO replace with serversArray.length, current setting is for testing only
     //console.log("In I loop - I is: " + i);
+
+    var serverConfig = getServerConfiguration(listOfServers.servers[i].config, i);
+    if (serverConfig === null) continue;
+    /*
     try {
       var serverConfig = require(listOfServers.servers[i].config);
       if(serverConfig === undefined) {
@@ -54,8 +76,8 @@ client.on('ready', () => {
       //console.log(err);
       continue;
     }
-
-
+    */
+    
     for(n = 0; n < serverConfig.streamers.length; n++){
       var nameAndState = new Collection();
       nameAndState.set(serverConfig.streamers[n].name, false);
