@@ -18,12 +18,14 @@ client.login(config.token);
 const listOfServers = require("./servers.json");
 
 //temp
+/*
 var servConfig = require("./serverConfig/NERV_HQ.json");
 //TODO redo these from config into server config
 const botChannelName = servConfig.botChannelName;
 const botChannelID = servConfig.botChannelID;
 const APILink = servConfig.APILink;
 const streamLink = servConfig.streamLink;
+*/
 
 //Global Variables
 var serversArray = null;
@@ -77,7 +79,7 @@ client.on('ready', () => {
       continue;
     }
     */
-    
+
     for(n = 0; n < serverConfig.streamers.length; n++){
       var nameAndState = new Collection();
       nameAndState.set(serverConfig.streamers[n].name, false);
@@ -95,9 +97,13 @@ setInterval(() => {
 
     let guild = client.guilds.get(listOfServers.servers[i].id);
     if(guild === undefined) {//Undefine occurs if there is an ID that doesn't match a server the client has access to.
-      console.log("Bad server id, or trying to access server the bot does not have access to. Server number: " + i + " named: " + listOfServers.servers[i].name);
+      //console.log("Bad server id, or trying to access server the bot does not have access to. Server number: " + i + " named: " + listOfServers.servers[i].name);
       continue;
     }
+
+    var servConfig = getServerConfiguration(listOfServers.servers[i].config, i);
+    if (servConfig === null) continue;
+    /*
     try {//This will fail if the configuration file is missing
       var servConfig = require(listOfServers.servers[i].config);
     } catch (err) {
@@ -105,10 +111,44 @@ setInterval(() => {
       continue;
     }
     //TODO try/catch  reading the rest of the server config file
+    */
 
-    //for(n = 0; n < ag; n++){
+    for(n = 0; n < servConfig.streamers.length; n++){//Loop to get each streamer's status and post messages
 
-      request.open('GET', APILink, false); //TODO APILink needs to be specific to the server config!
+      try {
+        request.open('GET', servConfig.streamers[n].APILink, false); //TODO APILink needs to be specific to the server config!
+      }
+      catch (err) {
+        console.log("An error has occured getting the API link:");
+        console.log(err);
+        continue;
+      }
+      request.send(null);
+      if(request.status == 200){
+        var reply = JSON.parse(request.responseText);
+
+        if(reply.is_online !== serverStateCollection.get(listOfServers.servers[i].id).get(servConfig.streamers[n].name)) { //if there has been a change
+          if(reply.is_online){ //if going to online, post about it and set state to online
+
+            var nameAndState = new Collection();
+            nameAndState.set(servConfig.streamers[n].name, true);
+            serverStateCollection.set(listOfServers.servers[i].id, nameAndState);
+
+            guild.channels.get(servConfig.botChannelID).sendMessage("@here " + reply.channel + " is now streaming! Check it out here: " + servConfig.streamers[n].streamLink);
+          }
+          else {//if going offline, say goodbye!
+            var nameAndState = new Collection();
+            nameAndState.set(servConfig.streamers[n].name, false);
+            serverStateCollection.set(listOfServers.servers[i].id, nameAndState);
+            guild.channels.get(servConfig.botChannelID).sendMessage(reply.channel + " has gone offline, thanks for watching!");
+          }
+        }
+      }//endof if(request.status == 200)
+
+    }//EndOF loop to iterate through API calls for streamers */
+
+
+      /*request.open('GET', APILink, false); //TODO APILink needs to be specific to the server config!
       request.send(null);
       if(request.status == 200){
         var reply = JSON.parse(request.responseText);
@@ -123,9 +163,7 @@ setInterval(() => {
             guild.channels.get(botChannelID).sendMessage(reply.channel + " has gone offline, thanks for watching!");
           }
         }
-      }//endof if(request.status == 200)
-  //  }//end of for loop to iterate through streamers on a server and do API pulls
-
+      }//endof if(request.status == 200) */
 
   }//endof for loop to iterate through servers
 }, refreshRate);
