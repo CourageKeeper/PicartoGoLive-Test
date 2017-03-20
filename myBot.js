@@ -127,6 +127,9 @@ setInterval(() => {
       if(request.status == 200){
         var reply = JSON.parse(request.responseText);
 
+        console.log("Server ID: " + serverStateCollection.get(listOfServers.servers[i].id));
+        console.log("Server Config: " + serverStateCollection.get(listOfServers.servers[i].id).get(servConfig));
+        console.log("State: " + serverStateCollection.get(listOfServers.servers[i].id).get(servConfig.streamers[n]));
         if(reply.is_online !== serverStateCollection.get(listOfServers.servers[i].id).get(servConfig.streamers[n].name)) { //if there has been a change
           if(reply.is_online){ //if going to online, post about it and set state to online
 
