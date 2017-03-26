@@ -79,12 +79,21 @@ client.on('ready', () => {
       continue;
     }
     */
-
+    var nameAndState = new Collection();
     for(n = 0; n < serverConfig.streamers.length; n++){
-      var nameAndState = new Collection();
       nameAndState.set(serverConfig.streamers[n].name, false);
-      serverStateCollection.set(serversArray[i], nameAndState); //Collection(ID, {streamer.name, STATE}) //What I HOPE is happening
     }//endof n for loop for iterating streamers and setting states
+    serverStateCollection.set(serversArray[i], nameAndState); //Collection(ID, {streamer.name, STATE}) //What I HOPE is happening
+
+    serverStateCollection.forEach(function(value, key) {
+      console.log(key + ' = ' + value);
+      value.forEach(function(value2, key2) {
+        console.log(key2 + ' = ' + value2);
+        });
+      });
+
+      //console.log("\n" + serverStateCollection.get(serversArray[i]).get(serverConfig.streamers[0].name));
+
   }//endof i for loop for iterating servers
   //console.log("Number of servers in directory: " + listOfServers.servers.length); //Servers the bot has configurations for
 
@@ -110,7 +119,6 @@ setInterval(() => {
       console.log("Bad or missing configuration file at position: " + i + " named: " + listOfServers.servers[i].name);
       continue;
     }
-    //TODO try/catch  reading the rest of the server config file
     */
 
     for(n = 0; n < servConfig.streamers.length; n++){//Loop to get each streamer's status and post messages
@@ -127,31 +135,32 @@ setInterval(() => {
       if(request.status == 200){
         var reply = JSON.parse(request.responseText);
 
-        console.log("Server ID: " + serverStateCollection.get(listOfServers.servers[i].id));
-        console.log("Server Config: " + serverStateCollection.get(listOfServers.servers[i].id).get(servConfig));
-        console.log("State: " + serverStateCollection.get(listOfServers.servers[i].id).get(servConfig.streamers[n]));
+        //console.log("online state for: " + servConfig.streamers[n].name + " is: " + serverStateCollection.get(listOfServers.servers[i].id).get(servConfig.streamers[n].name));
+          //replace BOOLreply with reply.is_online
         if(reply.is_online !== serverStateCollection.get(listOfServers.servers[i].id).get(servConfig.streamers[n].name)) { //if there has been a change
-          if(reply.is_online){ //if going to online, post about it and set state to online
-
+          console.log("There is a change to the online state.");
+          if(BOOLreply){ //if going to online, post about it and set state to online
+            console.log("is.online is true!");
             var nameAndState = new Collection();
             nameAndState.set(servConfig.streamers[n].name, true);
             serverStateCollection.set(listOfServers.servers[i].id, nameAndState);
-
             guild.channels.get(servConfig.botChannelID).sendMessage("@here " + reply.channel + " is now streaming! Check it out here: " + servConfig.streamers[n].streamLink);
           }
           else {//if going offline, say goodbye!
+            console.log("is.online is false");
             var nameAndState = new Collection();
             nameAndState.set(servConfig.streamers[n].name, false);
             serverStateCollection.set(listOfServers.servers[i].id, nameAndState);
             guild.channels.get(servConfig.botChannelID).sendMessage(reply.channel + " has gone offline, thanks for watching!");
           }
         }
+      //  console.log("online state for: " + servConfig.streamers[n].name + " is now: " + serverStateCollection.get(listOfServers.servers[i].id).get(servConfig.streamers[n].name));
       }//endof if(request.status == 200)
 
     }//EndOF loop to iterate through API calls for streamers */
 
 
-      /*request.open('GET', APILink, false); //TODO APILink needs to be specific to the server config!
+      /*request.open('GET', APILink, false);
       request.send(null);
       if(request.status == 200){
         var reply = JSON.parse(request.responseText);
