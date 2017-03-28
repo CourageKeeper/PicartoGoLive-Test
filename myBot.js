@@ -11,26 +11,22 @@ const fs = require("fs");
 const client = new Discord.Client();
 var request = new XMLHttpRequest();
 
+//The config is the basic configuration file for the bot itself, including global refresh rate and login key
 const config = require("./config.json");
 const refreshRate = config.refreshRate;
 client.login(config.token);
-
-const listOfServers = require("./servers.json");
-
-//temp
-/*
-var servConfig = require("./serverConfig/NERV_HQ.json");
-//TODO redo these from config into server config
-const botChannelName = servConfig.botChannelName;
-const botChannelID = servConfig.botChannelID;
-const APILink = servConfig.APILink;
-const streamLink = servConfig.streamLink;
-*/
+const listOfServers = require(config.servers);
 
 //Global Variables
-var serversArray = null;
-var serverStateCollection = new Collection();//This holds the online/offline states for servers.
+var serversArray = null;//This will hold the server keys from the client itself
+var serverStateCollection = new Collection();//This holds the online/offline states for streamers for all servers.
 
+/*
+* This function tries to load the config file for any given server. It will check to ensure
+* that the config file exists and that the config file contains the "streamers" array for use
+* later when reading Streamer IDs and API links. Console.logs left commented out for use when
+* making an error log file in the future.
+*/
 function getServerConfiguration(configLocation, serverNumber) {
   try {
     var serverConfig = require(configLocation);
@@ -53,73 +49,45 @@ function getServerConfiguration(configLocation, serverNumber) {
   }
 }//End of getServerConfiguration function
 
+/*
+* Client.on initializes the client and performs a few startup operations.
+* serversArray pulls a list of all the servers the bot is a member of.
+* The for loop iterates through all the servers in servers.json and all the streamers, initializing their
+* online state to "false". May be worth getting the online state directly from API if the number of users goes up
+*/
 client.on('ready', () => {
   console.log('Loading...');
   serversArray = client.guilds.keyArray();// ACTUAL Discord servers that the bot is a member of
 
   for(i = 0; i < listOfServers.servers.length; i++) { //TODO replace with serversArray.length, current setting is for testing only
-    //console.log("In I loop - I is: " + i);
 
     var serverConfig = getServerConfiguration(listOfServers.servers[i].config, i);
     if (serverConfig === null) continue;
-    /*
-    try {
-      var serverConfig = require(listOfServers.servers[i].config);
-      if(serverConfig === undefined) {
-        console.log("Server number: " + listOfServers.servers[i] + " in dictionary has an undefined config.json.");
-        continue;
-      }
-      if(serverConfig.streamers === undefined) {
-        console.log("Server config: " + listOfServers.servers[i].config + " is missing streamers construct");
-        continue;
-      }
-    }
-    catch (err){
-      //console.log(err);
-      continue;
-    }
-    */
+
     var nameAndState = new Collection();
     for(n = 0; n < serverConfig.streamers.length; n++){
       nameAndState.set(serverConfig.streamers[n].name, false);
     }//endof n for loop for iterating streamers and setting states
-    serverStateCollection.set(serversArray[i], nameAndState); //Collection(ID, {streamer.name, STATE}) //What I HOPE is happening
-
-    serverStateCollection.forEach(function(value, key) {
-      console.log(key + ' = ' + value);
-      value.forEach(function(value2, key2) {
-        console.log(key2 + ' = ' + value2);
-        });
-      });
-
-      //console.log("\n" + serverStateCollection.get(serversArray[i]).get(serverConfig.streamers[0].name));
-
+    serverStateCollection.set(serversArray[i], nameAndState); //Collection(ID, {streamer.name, STATE})
   }//endof i for loop for iterating servers
-  //console.log("Number of servers in directory: " + listOfServers.servers.length); //Servers the bot has configurations for
 
   console.log('Ready!');
 });//endof Ready! function
 
-//Timer for checking the online states
+/*
+* This performs API calls for every streamer with valid API links to determine if they are online, then
+* posts a message in the bot channel designated by that server file if the online state has changed.
+*/
 setInterval(() => {
   for(i = 0; i < listOfServers.servers.length; i++){//Iterate through all servers in servers.json Directory
 
     let guild = client.guilds.get(listOfServers.servers[i].id);
     if(guild === undefined) {//Undefine occurs if there is an ID that doesn't match a server the client has access to.
-      //console.log("Bad server id, or trying to access server the bot does not have access to. Server number: " + i + " named: " + listOfServers.servers[i].name);
       continue;
     }
 
     var servConfig = getServerConfiguration(listOfServers.servers[i].config, i);
     if (servConfig === null) continue;
-    /*
-    try {//This will fail if the configuration file is missing
-      var servConfig = require(listOfServers.servers[i].config);
-    } catch (err) {
-      console.log("Bad or missing configuration file at position: " + i + " named: " + listOfServers.servers[i].name);
-      continue;
-    }
-    */
 
     for(n = 0; n < servConfig.streamers.length; n++){//Loop to get each streamer's status and post messages
 
@@ -135,48 +103,25 @@ setInterval(() => {
       if(request.status == 200){
         var reply = JSON.parse(request.responseText);
 
-        //console.log("online state for: " + servConfig.streamers[n].name + " is: " + serverStateCollection.get(listOfServers.servers[i].id).get(servConfig.streamers[n].name));
-          //replace BOOLreply with reply.is_online
         if(reply.is_online !== serverStateCollection.get(listOfServers.servers[i].id).get(servConfig.streamers[n].name)) { //if there has been a change
-          console.log("There is a change to the online state.");
-          if(BOOLreply){ //if going to online, post about it and set state to online
-            console.log("is.online is true!");
+          //console.log("There is a change to the online state.");
+          if(reply.is_online){ //if going to online, post about it and set state to online
+            //console.log("is.online is true!");
             var nameAndState = new Collection();
             nameAndState.set(servConfig.streamers[n].name, true);
             serverStateCollection.set(listOfServers.servers[i].id, nameAndState);
             guild.channels.get(servConfig.botChannelID).sendMessage("@here " + reply.channel + " is now streaming! Check it out here: " + servConfig.streamers[n].streamLink);
           }
           else {//if going offline, say goodbye!
-            console.log("is.online is false");
+            //console.log("is.online is false");
             var nameAndState = new Collection();
             nameAndState.set(servConfig.streamers[n].name, false);
             serverStateCollection.set(listOfServers.servers[i].id, nameAndState);
             guild.channels.get(servConfig.botChannelID).sendMessage(reply.channel + " has gone offline, thanks for watching!");
           }
         }
-      //  console.log("online state for: " + servConfig.streamers[n].name + " is now: " + serverStateCollection.get(listOfServers.servers[i].id).get(servConfig.streamers[n].name));
       }//endof if(request.status == 200)
-
     }//EndOF loop to iterate through API calls for streamers */
-
-
-      /*request.open('GET', APILink, false);
-      request.send(null);
-      if(request.status == 200){
-        var reply = JSON.parse(request.responseText);
-
-        if(reply.is_online !== serverStateCollection.get(listOfServers.servers[i].id)) { //if there has been a change
-          if(reply.is_online){ //if going to online, post about it and set state to online
-            serverStateCollection.set(listOfServers.servers[i].id, true);
-            guild.channels.get(botChannelID).sendMessage("@here " + reply.channel + " is now streaming! Check it out here: " + streamLink);
-          }
-          else {//if going offline, say goodbye!
-            serverStateCollection.set(listOfServers.servers[i].id, false);
-            guild.channels.get(botChannelID).sendMessage(reply.channel + " has gone offline, thanks for watching!");
-          }
-        }
-      }//endof if(request.status == 200) */
-
   }//endof for loop to iterate through servers
 }, refreshRate);
 
@@ -232,5 +177,4 @@ client.on('message', message => {
   if (command === "ping") {
     message.channel.sendMessage('pong'); return;
   }
-
 });
