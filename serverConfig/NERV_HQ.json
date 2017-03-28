@@ -4,6 +4,8 @@
   "botChannelName" : "bot-channel",
   "botChannelID" : "286331296337362944",
   "_comment" : "Put APILink and Stream link per user in its own subsection",
-  "APILink" : "https://api.picarto.tv/channel/338bf7aa-fe1e-11e6-84c7-005056984bd4",
-  "streamLink" : "https://picarto.tv/Firefeet"
+  "streamers" : [
+    {"name" : "Firefeet", "APILink" : "https://api.picarto.tv/channel/338bf7aa-fe1e-11e6-84c7-005056984bd4", "streamLink" : "https://picarto.tv/Firefeet"},
+    {"name" : "TestBadAPI", "APILink" : "wakawakawakaBadAPILink", "streamLink" : "BadAPIStreamLink"}
+  ]
 }
