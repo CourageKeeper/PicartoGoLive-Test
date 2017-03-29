@@ -141,6 +141,7 @@ setInterval(() => {
 
 
 //Handles the joining of new members
+/*
 client.on("guildMemberAdd", member => {
   let guild = member.guild;
   let guildChannelsKeys = guild.channels.keyArray();
@@ -155,6 +156,7 @@ client.on("guildMemberAdd", member => {
   }
   guild.channels.get(botChannelID).sendMessage(`Welcome ${member.user} to ${guild.name}!`);
 });
+*/
 
 //Message contains the actions the bot can take in response to a user's message
 client.on('message', message => {
