@@ -58,6 +58,9 @@ function getServerConfiguration(configLocation, serverNumber) {
 client.on('ready', () => {
   console.log('Loading...');
   serversArray = client.guilds.keyArray();// ACTUAL Discord servers that the bot is a member of
+  if(serversArray.length !== listOfServers.servers.length){
+    console.log("Joined (" + serversArray.length + ") and configured (" + listOfServers.servers.length + ")  servers mismatch");
+  }
 
   for(i = 0; i < listOfServers.servers.length; i++) { //TODO replace with serversArray.length, current setting is for testing only
 
@@ -68,7 +71,16 @@ client.on('ready', () => {
     for(n = 0; n < serverConfig.streamers.length; n++){
       nameAndState.set(serverConfig.streamers[n].name, false);
     }//endof n for loop for iterating streamers and setting states
-    serverStateCollection.set(serversArray[i], nameAndState); //Collection(ID, {streamer.name, STATE})
+    serverStateCollection.set(listOfServers.servers[i].id, nameAndState); //Collection(ID, {streamer.name, STATE})
+
+    /*
+    serverStateCollection.forEach(function(value, key) {
+      console.log("Iter: " + key + ' = ' + value);
+      value.forEach(function(value2, key2) {
+        console.log("Iter2: " +key2 + ' = ' + value2);
+        });
+      });
+      */
   }//endof i for loop for iterating servers
 
   console.log('Ready!');
@@ -89,10 +101,12 @@ setInterval(() => {
     var servConfig = getServerConfiguration(listOfServers.servers[i].config, i);
     if (servConfig === null) continue;
 
+    var nameAndState = new Collection();
+
     for(n = 0; n < servConfig.streamers.length; n++){//Loop to get each streamer's status and post messages
 
       try {
-        request.open('GET', servConfig.streamers[n].APILink, false); //TODO APILink needs to be specific to the server config!
+        request.open('GET', servConfig.streamers[n].APILink, false);
       }
       catch (err) {
         console.log("An error has occured getting the API link:");
@@ -104,24 +118,24 @@ setInterval(() => {
         var reply = JSON.parse(request.responseText);
 
         if(reply.is_online !== serverStateCollection.get(listOfServers.servers[i].id).get(servConfig.streamers[n].name)) { //if there has been a change
-          //console.log("There is a change to the online state.");
           if(reply.is_online){ //if going to online, post about it and set state to online
-            //console.log("is.online is true!");
-            var nameAndState = new Collection();
             nameAndState.set(servConfig.streamers[n].name, true);
-            serverStateCollection.set(listOfServers.servers[i].id, nameAndState);
             guild.channels.get(servConfig.botChannelID).sendMessage("@here " + reply.channel + " is now streaming! Check it out here: " + servConfig.streamers[n].streamLink);
           }
           else {//if going offline, say goodbye!
-            //console.log("is.online is false");
-            var nameAndState = new Collection();
             nameAndState.set(servConfig.streamers[n].name, false);
-            serverStateCollection.set(listOfServers.servers[i].id, nameAndState);
             guild.channels.get(servConfig.botChannelID).sendMessage(reply.channel + " has gone offline, thanks for watching!");
           }
         }
+        else{
+          nameAndState.set(servConfig.streamers[n].name, reply.is_online);
+        }
+
       }//endof if(request.status == 200)
-    }//EndOF loop to iterate through API calls for streamers */
+    }//EndOF loop to iterate through API calls for streamers
+
+    serverStateCollection.set(listOfServers.servers[i].id, nameAndState);
+
   }//endof for loop to iterate through servers
 }, refreshRate);
 
