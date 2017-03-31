@@ -5,6 +5,7 @@
   "botChannelID" : "296400749892730880",
   "streamers" : [
     {"name" : "Hades", "APILink" : "https://api.picarto.tv/channel/66685676-1404-11e7-bebf-005056984bd4", "streamLink" : "https://picarto.tv/hades"},
-    {"name" : "Firefeet", "APILink" : "https://api.picarto.tv/channel/338bf7aa-fe1e-11e6-84c7-005056984bd4", "streamLink" : "https://picarto.tv/Firefeet"}
+    {"name" : "Firefeet", "APILink" : "https://api.picarto.tv/channel/338bf7aa-fe1e-11e6-84c7-005056984bd4", "streamLink" : "https://picarto.tv/Firefeet"},
+    {"name" : "Miss Mortis", "APILink" : "https://api.picarto.tv/channel/d2ba25d1-1464-11e7-bebf-005056984bd4", "streamLink" : "https://picarto.tv/missmortis"}
   ]
 }
