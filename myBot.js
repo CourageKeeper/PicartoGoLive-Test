@@ -87,6 +87,14 @@ client.on('ready', () => {
 });//endof Ready! function
 
 /*
+* Automatically reconnect if the bot disconnects due to inactivity
+* Disconnect code courtesy https://github.com/Zamiell
+*/
+client.on('disconnect', function(erMsg, code) {
+    console.log('----- Bot disconnected from Discord with code ', code, ' for reason: ', erMsg, ' -----');
+    client.connect();
+});
+/*
 * This performs API calls for every streamer with valid API links to determine if they are online, then
 * posts a message in the bot channel designated by that server file if the online state has changed.
 */
