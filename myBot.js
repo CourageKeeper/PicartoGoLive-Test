@@ -130,7 +130,7 @@ setInterval(() => {
             nameAndState.set(servConfig.streamers[n].name, true);
             guild.channels.get(servConfig.botChannelID).sendMessage("@here " + reply.channel + " is now streaming! Check it out here: " + servConfig.streamers[n].streamLink);
           }
-          else {//if going offline, say goodbye!
+          else if(!reply.is_online && serverStateCollection.get(listOfServers.servers[i].id).get(servConfig.streamers[n].name)){//if going offline, say goodbye!
             nameAndState.set(servConfig.streamers[n].name, false);
             guild.channels.get(servConfig.botChannelID).sendMessage(reply.channel + " has gone offline, thanks for watching!");
           }
